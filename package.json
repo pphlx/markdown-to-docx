@@ -1,0 +1,124 @@
+{
+  "name": "markdown-to-docx",
+  "displayName": "Markdown to DOCX",
+  "description": "Effortlessly convert Markdown documents into styled Word (.docx) files with letterhead, custom tables, and watermark support.",
+  "version": "1.0.0",
+  "icon": "icon.png",
+  "publisher": "pphlx",
+  "author": "PPHLX",
+  "license": "MIT",
+  "homepage": "https://pphlx.org",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pphlx/markdown-to-docx.git"
+  },
+  "categories": [
+    "Formatters",
+    "Other"
+  ],
+  "keywords": [
+    "markdown",
+    "docx",
+    "word",
+    "converter",
+    "letterhead",
+    "pdf"
+  ],
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onCommand:markdownToDocx.convert",
+    "onCommand:markdownToDocx.convertFile",
+    "onLanguage:markdown"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "markdownToDocx.convert",
+        "title": "Convert Markdown to DOCX",
+        "category": "Markdown to DOCX",
+        "icon": "$(file-word)"
+      },
+      {
+        "command": "markdownToDocx.convertFile",
+        "title": "Convert Markdown to DOCX",
+        "category": "Markdown to DOCX",
+        "icon": "$(file-word)"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "markdownToDocx.convertFile",
+          "when": "resourceExtname == .md",
+          "group": "navigation@1"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "markdownToDocx.convert",
+          "when": "editorLangId == markdown",
+          "group": "navigation"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "markdownToDocx.convert",
+          "when": "editorLangId == markdown || resourceExtname == .md",
+          "group": "1_modification@1"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Markdown to DOCX",
+      "properties": {
+        "markdownToDocx.headerImage": {
+          "type": "string",
+          "default": "",
+          "description": "Absolute or relative path to a header image (e.g. header.png) for letterhead styling."
+        },
+        "markdownToDocx.footerImage": {
+          "type": "string",
+          "default": "",
+          "description": "Absolute or relative path to a footer image (e.g. footer.png) for letterhead styling."
+        },
+        "markdownToDocx.watermarkText": {
+          "type": "string",
+          "default": "CONFIDENTIAL & PROPRIETARY",
+          "description": "Background watermark text printed diagonally on every page."
+        },
+        "markdownToDocx.accentColor": {
+          "type": "string",
+          "default": "B48C3C",
+          "description": "Hex color code (without #) for table headers and document accents."
+        },
+        "markdownToDocx.openAfterConversion": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically open the converted .docx file after generation."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run bundle",
+    "compile": "tsc -p ./",
+    "watch": "tsc -w -p ./",
+    "bundle": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
+    "package": "vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/marked": "^5.0.2",
+    "@types/node": "^18.16.19",
+    "@types/vscode": "^1.80.0",
+    "@vscode/vsce": "^2.19.0",
+    "esbuild": "^0.18.17",
+    "typescript": "^5.1.6"
+  },
+  "dependencies": {
+    "docx": "^8.2.2",
+    "marked": "^5.1.2"
+  }
+}

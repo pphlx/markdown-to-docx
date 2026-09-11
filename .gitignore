@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Build and output directories
+out/
+dist/
+
+# Extension packages
+*.vsix
+
+# VS Code test and temporary files
+.vscode-test/
+
+# Generated documents / local test files
+*.docx
+
+# Environment and logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env
+.env.*
+
+# OS generated files
+.DS_Store
+Thumbs.db
