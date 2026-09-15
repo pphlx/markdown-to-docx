@@ -19,7 +19,7 @@
 ## How to Use
 
 ### 1. Convert via File or Editor Context Menu
-Right-click any `.md` file in the File Explorer **or right-click anywhere inside an open Markdown document**, and select **"Convert Markdown to DOCX"**.
+Right-click any `.md` file in the File Explorer **or right-click anywhere inside an open Markdown document**, and select **"Convert to DOCX"**.
 
 ### 2. Convert via Editor Title Bar
 Open any Markdown document and click the **Word icon** in the top-right editor action bar.

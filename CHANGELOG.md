@@ -5,6 +5,18 @@ All notable changes to the "Markdown to DOCX" extension will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2026-09-15
+
+### Fixed
+- **Inline Line Breaks**: Markdown line breaks (trailing double spaces `  \n`, backslash breaks `\\\n`, and line breaks within paragraphs) now render as discrete paragraphs with preserved line spacing, preventing lines from collapsing into a single horizontal run.
+- **Literal Underscore Sequences**: Fixed inline emphasis parser to correctly treat repeated underscore sequences (`____...`) as literal text rather than improperly parsing them as bold or italic formatting delimiters.
+- **Font Rendering & Baseline Alignment**: Standardized default typography to Arial for consistent character geometry, baseline grid alignment, and crisp ClearType rendering across Word platforms.
+
+### Changed
+- **Menu Labels**: Simplified context menu actions in the File Explorer and Editor to `"Convert to DOCX"` for a cleaner UI.
+
+---
+
 ## [1.0.1] - 2026-09-15
 
 ### Added

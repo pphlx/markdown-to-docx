@@ -5,3 +5,10 @@ tsconfig.json
 *.map
 node_modules/**
 !dist/extension.js
+*.docx
+~$*
+*.vsix
+*.md
+!README.md
+!CHANGELOG.md
+!LICENSE.md

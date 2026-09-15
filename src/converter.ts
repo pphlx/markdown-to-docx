@@ -98,6 +98,24 @@ export async function convertMarkdownToDocx(
         }
       }
 
+      // Handle Multi-line Paragraph Blocks (e.g. metadata blocks, address blocks, signature blocks)
+      const lineBreakRegex = /(?:\s*<br(?:\s+[^>]*)?\/?>\s*| {2,}\r?\n|\\\r?\n|\r?\n)/gi;
+      const lines = text.split(lineBreakRegex);
+
+      if (lines.length > 1) {
+        const validLines = lines.map(l => l.trim()).filter(Boolean);
+        validLines.forEach((l, idx) => {
+          const runs = parseInlineFormatting(l);
+          children.push(
+            new Paragraph({
+              children: runs,
+              spacing: { after: idx === validLines.length - 1 ? 120 : 60 },
+            })
+          );
+        });
+        continue;
+      }
+
       const runs = parseInlineFormatting(text);
       children.push(
         new Paragraph({
@@ -254,7 +272,7 @@ export async function convertMarkdownToDocx(
       default: {
         document: {
           run: {
-            font: 'Helvetica',
+            font: 'Arial',
             size: 20, // 10pt
             color: DEFAULT_TEXT_COLOR,
           },
@@ -370,8 +388,8 @@ function addTextWithLineBreaks(
   runs: InlineRun[],
   styleOptions: InlineStyleOptions = {}
 ): void {
-  const brRegex = /\s*<br(?:\s+[^>]*)?\/?>\s*/gi;
-  const segments = rawText.split(brRegex);
+  const lineBreakRegex = /(?:\s*<br(?:\s+[^>]*)?\/?>\s*| {2,}\r?\n|\\\r?\n|\r?\n)/gi;
+  const segments = rawText.split(lineBreakRegex);
 
   for (let i = 0; i < segments.length; i++) {
     if (i > 0) {
@@ -389,15 +407,20 @@ function parseInlineFormatting(
   baseStyle: InlineStyleOptions = {}
 ): InlineRun[] {
   const runs: InlineRun[] = [];
-  const inlineRegex = /(\*\*\*[\s\S]*?\*\*\*|___[\s\S]*?___|\*\*[\s\S]*?\*\*|__[\s\S]*?__|~~[\s\S]*?~~|`[^`]*?`|\$\$[\s\S]+?\$\$|\$(?!\s)(?:[^\$\n]+?\S|[^\$\s])\$|\*[^*\n]+?\*|_[^_\n]+?_)/g;
+  const inlineRegex = /(```[\s\S]*?```|`[^`\n]+?`|\$\$[\s\S]+?\$\$|\$(?!\s)(?:[^\$\n]+?\S|[^\$\s])\$|\*\*\*(?!\*|\s)[\s\S]+?(?<!\*|\s)\*\*\*|___(?!_|\s)[\s\S]+?(?<!_|\s)___|\*\*(?!\*|\s)[\s\S]+?(?<!\*|\s)\*\*|__(?!_|\s)[\s\S]+?(?<!_|\s)__|~~(?!\~|\s)[\s\S]+?(?<!\~|\s)~~|\*(?!\*|\s)[^*\n]+?(?<!\*|\s)\*|(?<!\w)_(?!_|\s)[^_\n]+?(?<!_|\s)_(?!\w))/g;
   const parts = text.split(inlineRegex);
 
   for (const part of parts) {
     if (!part) continue;
 
+    const isAllUnderscores = /^_+$/.test(part);
+    const isAllAsterisks = /^\*+$/.test(part);
+
     if (
-      (part.startsWith('***') && part.endsWith('***')) ||
-      (part.startsWith('___') && part.endsWith('___'))
+      !isAllUnderscores &&
+      !isAllAsterisks &&
+      ((part.startsWith('***') && part.endsWith('***') && part.length >= 7) ||
+        (part.startsWith('___') && part.endsWith('___') && part.length >= 7))
     ) {
       const inner = part.slice(3, -3);
       addTextWithLineBreaks(inner, runs, {
@@ -406,8 +429,10 @@ function parseInlineFormatting(
         italics: true,
       });
     } else if (
-      (part.startsWith('**') && part.endsWith('**')) ||
-      (part.startsWith('__') && part.endsWith('__'))
+      !isAllUnderscores &&
+      !isAllAsterisks &&
+      ((part.startsWith('**') && part.endsWith('**') && part.length >= 5) ||
+        (part.startsWith('__') && part.endsWith('__') && part.length >= 5))
     ) {
       const inner = part.slice(2, -2);
       addTextWithLineBreaks(inner, runs, {
@@ -415,15 +440,17 @@ function parseInlineFormatting(
         bold: true,
       });
     } else if (
-      (part.startsWith('*') && part.endsWith('*')) ||
-      (part.startsWith('_') && part.endsWith('_'))
+      !isAllUnderscores &&
+      !isAllAsterisks &&
+      ((part.startsWith('*') && part.endsWith('*') && part.length >= 3) ||
+        (part.startsWith('_') && part.endsWith('_') && part.length >= 3))
     ) {
       const inner = part.slice(1, -1);
       addTextWithLineBreaks(inner, runs, {
         ...baseStyle,
         italics: true,
       });
-    } else if (part.startsWith('~~') && part.endsWith('~~')) {
+    } else if (part.startsWith('~~') && part.endsWith('~~') && part.length >= 5) {
       const inner = part.slice(2, -2);
       addTextWithLineBreaks(inner, runs, {
         ...baseStyle,
