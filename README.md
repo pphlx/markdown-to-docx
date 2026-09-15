@@ -7,6 +7,7 @@
 ## Features
 
 - **1-Click Conversion**: Right-click any `.md` file in the Explorer menu or click the Word icon in the editor title bar.
+- **LaTeX Math Equations**: Converts `$$...$$` blocks and inline `$x$` formulas into native Microsoft Word Equations (OMML).
 - **Custom Letterhead Support**: Embed company headers (`header.png`) and footers (`footer.png`) automatically.
 - **Executive Typography & Tables**: Formatted headings, colored table headers, alternating row shading, and cell padding.
 - **GitHub Callout Alerts**: Renders `> [!IMPORTANT]`, `> [!NOTE]`, and `> [!WARNING]` callout boxes with colored left borders.

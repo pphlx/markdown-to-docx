@@ -2,7 +2,7 @@
   "name": "markdown-to-docx",
   "displayName": "Markdown to DOCX",
   "description": "Effortlessly convert Markdown documents into styled Word (.docx) files with letterhead, custom tables, and watermark support.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "icon": "icon.png",
   "publisher": "pphlx",
   "author": "PPHLX",
@@ -119,6 +119,8 @@
   },
   "dependencies": {
     "docx": "^8.2.2",
-    "marked": "^5.1.2"
+    "marked": "^5.1.2",
+    "mathml2omml": "^0.5.0",
+    "temml": "^0.13.5"
   }
 }

@@ -17,7 +17,12 @@ import {
   AlignmentType,
   ShadingType,
   Packer,
+  ImportedXmlComponent,
 } from 'docx';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const temml = require('temml');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { mml2omml } = require('mathml2omml');
 import {
   ConverterOptions,
   DEFAULT_ACCENT_COLOR,
@@ -67,6 +72,32 @@ export async function convertMarkdownToDocx(
         }
       }
 
+      // Handle Standalone Display Math Block ($$ ... $$, \[ ... \], or \begin{...} ... \end{...})
+      const trimmedText = text.trim();
+      if (
+        (trimmedText.startsWith('$$') && trimmedText.endsWith('$$') && trimmedText.length >= 4) ||
+        (trimmedText.startsWith('\\[') && trimmedText.endsWith('\\]') && trimmedText.length >= 4) ||
+        /^\s*\\begin\{(?:equation|align|gather|matrix|bmatrix|pmatrix|vmatrix)\*?\}[\s\S]+\\end\{(?:equation|align|gather|matrix|bmatrix|pmatrix|vmatrix)\*?\}\s*$/.test(trimmedText)
+      ) {
+        let latex = trimmedText;
+        if (latex.startsWith('$$') && latex.endsWith('$$')) {
+          latex = latex.slice(2, -2).trim();
+        } else if (latex.startsWith('\\[') && latex.endsWith('\\]')) {
+          latex = latex.slice(2, -2).trim();
+        }
+        const mathComp = createMathComponent(latex);
+        if (mathComp) {
+          children.push(
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              children: [mathComp],
+              spacing: { before: 180, after: 180 },
+            })
+          );
+          continue;
+        }
+      }
+
       const runs = parseInlineFormatting(text);
       children.push(
         new Paragraph({
@@ -98,6 +129,19 @@ export async function convertMarkdownToDocx(
         const mermaidImgParagraph = await renderMermaidDiagram(token.text);
         if (mermaidImgParagraph) {
           children.push(mermaidImgParagraph);
+          continue;
+        }
+      }
+      if (token.lang === 'math' || token.lang === 'latex') {
+        const mathComp = createMathComponent(token.text);
+        if (mathComp) {
+          children.push(
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              children: [mathComp],
+              spacing: { before: 180, after: 180 },
+            })
+          );
           continue;
         }
       }
@@ -256,6 +300,22 @@ function getHeadingLevel(depth: number): (typeof HeadingLevel)[keyof typeof Head
   }
 }
 
+function createMathComponent(latex: string): ImportedXmlComponent | null {
+  try {
+    const cleanLatex = latex.trim();
+    if (!cleanLatex) return null;
+    const mml = temml.renderToString(cleanLatex, { mathml: true });
+    const omml = mml2omml(mml);
+    const raw = ImportedXmlComponent.fromXmlString(omml);
+    return ((raw as any).rootKey ? raw : (raw as any).root[0]) as ImportedXmlComponent;
+  } catch (err) {
+    console.warn('Could not parse LaTeX equation:', latex, err);
+    return null;
+  }
+}
+
+type InlineRun = TextRun | ImportedXmlComponent;
+
 interface InlineStyleOptions {
   bold?: boolean;
   italics?: boolean;
@@ -307,7 +367,7 @@ function decodeHtmlEntities(str: string): string {
 
 function addTextWithLineBreaks(
   rawText: string,
-  runs: TextRun[],
+  runs: InlineRun[],
   styleOptions: InlineStyleOptions = {}
 ): void {
   const brRegex = /\s*<br(?:\s+[^>]*)?\/?>\s*/gi;
@@ -327,9 +387,9 @@ function addTextWithLineBreaks(
 function parseInlineFormatting(
   text: string,
   baseStyle: InlineStyleOptions = {}
-): TextRun[] {
-  const runs: TextRun[] = [];
-  const inlineRegex = /(\*\*\*[\s\S]*?\*\*\*|___[\s\S]*?___|\*\*[\s\S]*?\*\*|__[\s\S]*?__|~~[\s\S]*?~~|`[^`]*?`|\*[^*\n]+?\*|_[^_\n]+?_)/g;
+): InlineRun[] {
+  const runs: InlineRun[] = [];
+  const inlineRegex = /(\*\*\*[\s\S]*?\*\*\*|___[\s\S]*?___|\*\*[\s\S]*?\*\*|__[\s\S]*?__|~~[\s\S]*?~~|`[^`]*?`|\$\$[\s\S]+?\$\$|\$(?!\s)(?:[^\$\n]+?\S|[^\$\s])\$|\*[^*\n]+?\*|_[^_\n]+?_)/g;
   const parts = text.split(inlineRegex);
 
   for (const part of parts) {
@@ -380,6 +440,22 @@ function parseInlineFormatting(
           color: DEFAULT_DARK_COLOR,
         })
       );
+    } else if (part.startsWith('$$') && part.endsWith('$$') && part.length >= 4) {
+      const latex = part.slice(2, -2).trim();
+      const mathComp = createMathComponent(latex);
+      if (mathComp) {
+        runs.push(mathComp);
+      } else {
+        addTextWithLineBreaks(part, runs, baseStyle);
+      }
+    } else if (part.startsWith('$') && part.endsWith('$') && part.length >= 2) {
+      const latex = part.slice(1, -1).trim();
+      const mathComp = createMathComponent(latex);
+      if (mathComp) {
+        runs.push(mathComp);
+      } else {
+        addTextWithLineBreaks(part, runs, baseStyle);
+      }
     } else {
       addTextWithLineBreaks(part, runs, baseStyle);
     }
